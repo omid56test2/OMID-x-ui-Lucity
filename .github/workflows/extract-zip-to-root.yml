@@ -1,4 +1,5 @@
-name: Zip extract uses: hoatruongdev09/extract-zip-github-action@v1.2
+name: Zip extract
+    uses: hoatruongdev09/extract-zip-github-action@v1.2
 with:
     # zip file path
     input-path: 
