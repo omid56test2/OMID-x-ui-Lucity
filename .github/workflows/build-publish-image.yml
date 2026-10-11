@@ -1,6 +1,6 @@
 name: Build and publish 3X-UI image
 
-on:
+'on':
   push:
   workflow_dispatch:
 
@@ -25,12 +25,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
+      - name: Prepare image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # Uses this repository's own name, e.g. ghcr.io/owner/repository
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=sha,format=long
+
+      - name: Build and publish image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ghcr.io/omid56test2/omid232:latest
-            ghcr.io/omid56test2/omid232:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
