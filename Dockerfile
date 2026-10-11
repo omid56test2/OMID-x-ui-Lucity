@@ -28,7 +28,7 @@ COPY --from=frontend /src/internal/web/dist ./internal/web/dist
 ENV CGO_ENABLED=1
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
 RUN go build -ldflags "-w -s" -o build/x-ui main.go
-RUN ./DockerInit.sh "$TARGETARCH"
+RUN chmod +x ./DockerInit.sh && ./DockerInit.sh "$TARGETARCH"
 
 # ========================================================
 # Stage: Final Image of 3x-ui
@@ -68,6 +68,7 @@ RUN chmod +x \
   /app/x-ui \
   /usr/bin/x-ui \
   /usr/bin/supervisord
+
 
 # Keep Nginx logs on stdout/stderr and writable temp paths for restricted container runtimes.
 RUN mkdir -p /tmp/nginx/client_body /tmp/nginx/proxy /tmp/nginx/fastcgi /tmp/nginx/uwsgi /tmp/nginx/scgi \
