@@ -150,18 +150,9 @@ func (t *Tgbot) buildSubscriptionURLs(email string) (string, string, error) {
 	subURI, _ := t.settingService.GetSubURI()
 	subJsonURI, _ := t.settingService.GetSubJsonURI()
 	subDomain, _ := t.settingService.GetSubDomain()
-	subPort, _ := t.settingService.GetSubPort()
 	subPath, _ := t.settingService.GetSubPath()
 	subJsonPath, _ := t.settingService.GetSubJsonPath()
 	subJsonEnable, _ := t.settingService.GetSubJsonEnable()
-	subKeyFile, _ := t.settingService.GetSubKeyFile()
-	subCertFile, _ := t.settingService.GetSubCertFile()
-
-	tls := (subKeyFile != "" && subCertFile != "")
-	scheme := "http"
-	if tls {
-		scheme = "https"
-	}
 
 	// Fallbacks
 	if subDomain == "" {
@@ -175,12 +166,10 @@ func (t *Tgbot) buildSubscriptionURLs(email string) (string, string, error) {
 		}
 	}
 
-	host := subDomain
-	if (subPort == 443 && tls) || (subPort == 80 && !tls) {
-		// standard ports: no port in host
-	} else {
-		host = fmt.Sprintf("%s:%d", subDomain, subPort)
-	}
+	// Use the same scheme/host calculation as the panel and subscription
+	// service. In Lucity, XUI_SUB_PUBLIC_HTTPS=true means public TLS ends at
+	// the platform proxy, so generated links must not expose the internal 2096.
+	baseURL := t.settingService.BuildSubURIBase(subDomain)
 
 	// Ensure paths
 	if !strings.HasPrefix(subPath, "/") {
@@ -206,7 +195,7 @@ func (t *Tgbot) buildSubscriptionURLs(email string) (string, string, error) {
 		}
 		subURL = fmt.Sprintf("%s%s", subURI, client.SubID)
 	} else {
-		subURL = fmt.Sprintf("%s://%s%s%s", scheme, host, subPath, client.SubID)
+		subURL = fmt.Sprintf("%s%s%s", baseURL, subPath, client.SubID)
 	}
 
 	if subJsonURI != "" {
@@ -215,7 +204,7 @@ func (t *Tgbot) buildSubscriptionURLs(email string) (string, string, error) {
 		}
 		subJsonURL = fmt.Sprintf("%s%s", subJsonURI, client.SubID)
 	} else {
-		subJsonURL = fmt.Sprintf("%s://%s%s%s", scheme, host, subJsonPath, client.SubID)
+		subJsonURL = fmt.Sprintf("%s%s%s", baseURL, subJsonPath, client.SubID)
 	}
 
 	if !subJsonEnable {
