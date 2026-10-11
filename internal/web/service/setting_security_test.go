@@ -2,7 +2,6 @@ package service
 
 import (
 	"path/filepath"
-	"regexp"
 	"testing"
 	"time"
 
@@ -13,13 +12,13 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 )
 
-func TestResetSettingsRegeneratesSubscriptionPaths(t *testing.T) {
+func TestResetSettingsRestoresSubscriptionPaths(t *testing.T) {
 	setupSettingTestDB(t)
 	s := &SettingService{}
 	for key, value := range map[string]string{
-		"subPath":      "/sub/",
-		"subJsonPath":  "/json/",
-		"subClashPath": "/clash/",
+		"subPath":      "/custom-sub/",
+		"subJsonPath":  "/custom-json/",
+		"subClashPath": "/custom-clash/",
 		"webPort":      "8443",
 	} {
 		if err := s.saveSetting(key, value); err != nil {
@@ -31,20 +30,19 @@ func TestResetSettingsRegeneratesSubscriptionPaths(t *testing.T) {
 		t.Fatalf("ResetSettings: %v", err)
 	}
 
-	pathPattern := regexp.MustCompile(`^/[0-9a-z]{16}/$`)
-	paths := map[string]string{}
-	for _, key := range []string{"subPath", "subJsonPath", "subClashPath"} {
+	want := map[string]string{
+		"subPath":      "/sub/",
+		"subJsonPath":  "/json/",
+		"subClashPath": "/clash/",
+	}
+	for key, expected := range want {
 		value, err := s.getString(key)
 		if err != nil {
 			t.Fatalf("read %s: %v", key, err)
 		}
-		if !pathPattern.MatchString(value) {
-			t.Errorf("%s = %q, want /<16 lowercase alphanumeric characters>/", key, value)
+		if value != expected {
+			t.Errorf("%s = %q, want %q", key, value, expected)
 		}
-		paths[key] = value
-	}
-	if paths["subPath"] == paths["subJsonPath"] || paths["subPath"] == paths["subClashPath"] || paths["subJsonPath"] == paths["subClashPath"] {
-		t.Fatalf("subscription paths must be distinct: %v", paths)
 	}
 	if port, err := s.GetPort(); err != nil || port != 2053 {
 		t.Fatalf("web port after reset = %d, %v; want 2053", port, err)

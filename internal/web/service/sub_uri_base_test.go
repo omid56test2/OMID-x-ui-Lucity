@@ -8,6 +8,7 @@ import "testing"
 // Sub Domain preference, standard-port omission, and IPv6 bracketing.
 func TestBuildSubURIBase(t *testing.T) {
 	setupConflictDB(t)
+	t.Setenv("XUI_SUB_PUBLIC_HTTPS", "false")
 	s := &SettingService{}
 
 	set := func(subDomain, port, cert, key string) {
@@ -48,4 +49,12 @@ func TestBuildSubURIBase(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("public HTTPS proxy omits internal port", func(t *testing.T) {
+		t.Setenv("XUI_SUB_PUBLIC_HTTPS", "true")
+		set("subs.example.com", "2096", "", "")
+		if got := s.BuildSubURIBase("panel.example.com:2053"); got != "https://subs.example.com" {
+			t.Fatalf("BuildSubURIBase() = %q, want %q", got, "https://subs.example.com")
+		}
+	})
 }
