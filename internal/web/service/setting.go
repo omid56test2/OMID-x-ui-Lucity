@@ -397,9 +397,9 @@ func (s *SettingService) ResetSettings() error {
 			return err
 		}
 		paths := []model.Setting{
-			{Key: "subPath", Value: "/" + random.NumLower(16) + "/"},
-			{Key: "subJsonPath", Value: "/" + random.NumLower(16) + "/"},
-			{Key: "subClashPath", Value: "/" + random.NumLower(16) + "/"},
+			{Key: "subPath", Value: "/sub/"},
+			{Key: "subJsonPath", Value: "/Json/"},
+			{Key: "subClashPath", Value: "/Clash/"},
 		}
 		return tx.Create(&paths).Error
 	})
@@ -1906,17 +1906,27 @@ func (s *SettingService) BuildSubURIBase(host string) string {
 	subDomain, _ := s.GetSubDomain()
 	subKeyFile, _ := s.GetSubKeyFile()
 	subCertFile, _ := s.GetSubCertFile()
+
 	subTLS := subKeyFile != "" && subCertFile != ""
+
 	if subDomain == "" {
 		subDomain = extractHostname(host)
 	}
+
+	// Lucity terminates public HTTPS and forwards requests internally.
+	if os.Getenv("XUI_SUB_PUBLIC_HTTPS") == "true" {
+		return "https://" + subDomain
+	}
+
 	scheme := "http"
 	if subTLS {
 		scheme = "https"
 	}
+
 	if (subPort == 443 && subTLS) || (subPort == 80 && !subTLS) {
 		return scheme + "://" + subDomain
 	}
+
 	return fmt.Sprintf("%s://%s:%d", scheme, subDomain, subPort)
 }
 
