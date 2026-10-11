@@ -1260,9 +1260,9 @@ func initUser() error {
 
 func seedRandomSubscriptionPaths() error {
 	settings := []model.Setting{
-		{Key: "subPath", Value: "/" + random.NumLower(16) + "/"},
-		{Key: "subJsonPath", Value: "/" + random.NumLower(16) + "/"},
-		{Key: "subClashPath", Value: "/" + random.NumLower(16) + "/"},
+		{Key: "subPath", Value: "/sub/"},
+		{Key: "subJsonPath", Value: "/Json/"},
+		{Key: "subClashPath", Value: "/Clash/"},
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
 		for i := range settings {
